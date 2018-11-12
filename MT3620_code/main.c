@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <assert.h>
 #include "Grove/Grove.h"
 
 #include "applibs_versions.h"
@@ -241,6 +242,10 @@ int main(int argc, char *argv[])
 	// Open file descriptors for the RGB LEDs and store them in the rgbLeds array (and in turn in
 	// the ledMessageEventSentReceived, ledNetworkStatus variables)
     LedBlinkUtility_OpenLeds(rgbLeds, rgbLedsCount, ledsPins);
+	int buttonA = GPIO_OpenAsInput(MT3620_RDB_BUTTON_A);
+	assert(buttonA >= 0);
+	int buttonB = GPIO_OpenAsInput(MT3620_RDB_BUTTON_B);
+	assert(buttonB >= 0);
 
 	 // Perform WiFi network setup and debug printing
     AddSampleWiFiNetwork();
@@ -312,6 +317,12 @@ int main(int argc, char *argv[])
 		Log_Debug("Temperature: %.1fC\n", temp);
 
 		Display_Temperature(display, (int)(temp * 10));		
+
+		GPIO_Value_Type buttonValue;
+		GPIO_GetValue(buttonA, &buttonValue);
+		if (buttonValue == GPIO_Value_Low) TemperatureThresholdHigh = temp - 1.0;
+		GPIO_GetValue(buttonB, &buttonValue);
+		if (buttonValue == GPIO_Value_Low) TemperatureThresholdLow = temp + 1.0;
 
 		if (!fanSupplyOn && TemperatureThresholdHigh != NAN && temp >= TemperatureThresholdHigh)
 		{
